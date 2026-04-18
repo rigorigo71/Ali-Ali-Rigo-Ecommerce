@@ -1,0 +1,24 @@
+html
+  head
+    title #{shoe.brand} #{shoe.name}
+    link(rel='stylesheet', href='/styles.css')
+  body
+    nav
+      a(href='/') SOLE
+      a(href='/shoes') Shop
+    .page
+      .card.card--detail
+        p.brand #{shoe.brand}
+        h1 #{shoe.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+        p.price $#{shoe.price.toFixed(2)}
+        table
+          tr
+            td Color
+            td #{shoe.color.charAt(0).toUpperCase() + shoe.color.slice(1)}
+          tr
+            td Size
+            td #{shoe.size}
+          tr
+            td Brand
+            td #{shoe.brand}
+        a.btn(href='/shoes') ← Back to All Shoes
