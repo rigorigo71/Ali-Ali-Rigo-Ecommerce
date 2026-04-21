@@ -2,7 +2,7 @@
 
 A Node.js/Express e-commerce catalog for browsing and discovering footwear from top brands.
 
-## Group Members
+## Contributers
 
 | Name | GitHub |
 |------|--------|
@@ -10,6 +10,7 @@ A Node.js/Express e-commerce catalog for browsing and discovering footwear from 
 | Ali Sohby | [@asohby04](https://github.com/asohby04) |
 | Ali Piskin | [@aarda5](https://github.com/aarda5) |
 
+All contributers collaborate through GitHub using feature branches.
 ---
 
 ## Tech Stack
@@ -164,3 +165,12 @@ Removes a shoe by name and returns the deleted object.
 | `GET /` | Home page with hero section |
 | `GET /shoes` | Full catalog grid |
 | `GET /shoes/:name` | Detail page for a single shoe |
+
+---
+
+## Future Improvements
+
+- Improve search and filtering
+- Implement user authentication
+- Add database integration
+- Add shopping cart function
