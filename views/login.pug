@@ -1,0 +1,14 @@
+//- views/login.pug
+extends layout
+
+block content
+  .login-form
+    h1 Login
+    form(action='/login', method='POST')
+      div
+        label Username:
+        input(type='text', name='username', required)
+      div
+        label Password:
+        input(type='password', name='password', required)
+      button.btn(type='submit') Log In

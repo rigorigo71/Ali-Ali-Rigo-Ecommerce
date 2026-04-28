@@ -1,0 +1,16 @@
+//- views/layout.pug
+doctype html
+html
+  head
+    title= title ? title : 'Shoe Store'
+    link(rel='stylesheet', href='/styles.css')
+  body
+    nav
+      a(href='/') SOLE
+      a(href='/products') Shop
+      a(href='/cart') Cart
+      a(href='/login') Login
+    main
+      block content
+    footer
+      p &copy; 2026 Ali-Ali-Rigo-Ecommerce – All rights reserved.

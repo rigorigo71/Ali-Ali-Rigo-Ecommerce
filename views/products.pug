@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  .page
+    h1 All Shoes
+    .grid
+      each shoe in shoes
+        .card
+          a(href=`/products/${shoe.name}`) 
+            p.brand #{shoe.brand}
+            h2 #{shoe.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+            p.price $#{shoe.price.toFixed(2)}
+            p.meta
+              span.swatch(style=`background: ${shoe.color}`)
+              | #{shoe.color.charAt(0).toUpperCase() + shoe.color.slice(1)} &nbsp;·&nbsp; Size #{shoe.size}

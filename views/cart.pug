@@ -1,0 +1,25 @@
+//- views/cart.pug
+extends layout
+
+block content
+  .cart
+    h1 Shopping Cart
+    table
+      tr
+        th Product
+        th Quantity
+        th Price
+      tr
+        td Air Max
+        td 1
+        td $129.99
+      tr
+        td Chuck Taylor
+        td 2
+        td $119.98
+      tr
+        td Stan Smith
+        td 1
+        td $89.99
+    p.total Total: $339.96
+    a.btn(href='/products') Continue Shopping
