@@ -1,0 +1,36 @@
+extends layout
+
+block content
+  .page
+    h1 #{customer.username}'s Cart
+
+    if !cart || cart.length === 0
+      p Your cart is empty.
+      a.btn(href='/products') Shop Now
+
+    else
+      .grid
+        each item in cart
+          .card
+            h2 #{item.name}
+            p.brand #{item.brand}
+            p.price $#{item.price.toFixed(2)}
+            p.meta Size: #{item.size} &nbsp;|&nbsp; Qty: #{item.qty}
+            p.meta Subtotal: $#{(item.price * item.qty).toFixed(2)}
+            button.btn.btn-remove(data-name=item.name) Remove
+
+      p(style='margin-top:2rem; font-size:1.2rem; font-weight:800')
+        | Total: $#{cart.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(2)}
+
+  script.
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+      btn.addEventListener('click', function() {
+        fetch('/cart/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: this.dataset.name })
+        })
+        .then(res => res.json())
+        .then(() => location.reload());
+      });
+    });

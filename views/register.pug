@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  .login-form
+    h1 Create Account
+    if error
+      p(style='color:red; margin-bottom:1rem') #{error}
+    form(action='/register', method='POST')
+      div
+        label Username:
+        input(type='text', name='username', required)
+      div
+        label Password:
+        input(type='password', name='password', required)
+      button.btn(type='submit') Register
+    p(style='margin-top:1rem; text-align:center')
+      | Already have an account? 
+      a(href='/login') Log in

@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .page
+    .card.card--detail
+      p.brand #{shoe.brand}
+      h1 #{shoe.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+      p.price $#{shoe.price.toFixed(2)}
+      table
+        tr
+          td Color
+          td #{shoe.color.charAt(0).toUpperCase() + shoe.color.slice(1)}
+        tr
+          td Size
+          td #{shoe.size}
+        tr
+          td Brand
+          td #{shoe.brand}
+
+      hr(style='border:none; border-top:1px solid #f0f0f0; margin:1.5rem 0')
+
+      button.btn#add-to-cart(data-name=shoe.name) Add to Cart
+      p#cart-msg(style='margin-top:1rem; color:green; display:none; text-align:center') ✓ Added to cart!
+      a.btn(href='/products' style='text-align:center; margin-top:0.75rem') ← Back to All Shoes
+
+  script.
+    document.getElementById('add-to-cart').addEventListener('click', function() {
+      fetch('/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: this.dataset.name })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const msg = document.getElementById('cart-msg');
+          msg.style.display = 'block';
+          setTimeout(() => msg.style.display = 'none', 2000);
+        }
+      });
+    });
