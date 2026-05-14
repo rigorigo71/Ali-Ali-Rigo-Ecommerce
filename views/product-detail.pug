@@ -1,5 +1,4 @@
 extends layout
-
 block content
   .page
     .card.card--detail
@@ -16,26 +15,39 @@ block content
         tr
           td Brand
           td #{shoe.brand}
-
       hr(style='border:none; border-top:1px solid #f0f0f0; margin:1.5rem 0')
-
+      .qty-selector(style='display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem')
+        button#qty-down(type='button' style='width:2rem; height:2rem; font-size:1.2rem; cursor:pointer') −
+        span#qty-display(style='font-size:1.1rem; font-weight:700; min-width:1.5rem; text-align:center') 1
+        button#qty-up(type='button' style='width:2rem; height:2rem; font-size:1.2rem; cursor:pointer') +
       button.btn#add-to-cart(data-name=shoe.name) Add to Cart
       p#cart-msg(style='margin-top:1rem; color:green; display:none; text-align:center') ✓ Added to cart!
-      a.btn(href='/products' style='text-align:center; margin-top:0.75rem') ← Back to All Shoes
+      a.btn(href='/products' style='text-align:center; margin-top:0.75rem; color:white') ← Back to All Shoes
+      script.
+        let qty = 1;
+        const display = document.getElementById('qty-display');
 
-  script.
-    document.getElementById('add-to-cart').addEventListener('click', function() {
-      fetch('/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: this.dataset.name })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          const msg = document.getElementById('cart-msg');
-          msg.style.display = 'block';
-          setTimeout(() => msg.style.display = 'none', 2000);
-        }
-      });
-    });
+        document.getElementById('qty-down').addEventListener('click', function() {
+          if (qty > 1) { qty--; display.textContent = qty; }
+        });
+
+        document.getElementById('qty-up').addEventListener('click', function() {
+          qty++;
+          display.textContent = qty;
+        });
+
+        document.getElementById('add-to-cart').addEventListener('click', function() {
+          fetch('/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: this.dataset.name, qty })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              const msg = document.getElementById('cart-msg');
+              msg.style.display = 'block';
+              setTimeout(() => msg.style.display = 'none', 2000);
+            }
+          });
+        });

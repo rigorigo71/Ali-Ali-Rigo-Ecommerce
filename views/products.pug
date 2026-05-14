@@ -1,8 +1,15 @@
 extends layout
-
 block content
   .page
-    h1 All Shoes
+    .products-header(style='display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem')
+      h1(style='margin:0') All Shoes
+      select#sort-select(style='padding:0.4rem 0.75rem; font-size:0.95rem; border:1px solid #ddd; border-radius:8px; cursor:pointer')
+        option(value='' selected=currentSort==='') Default
+        option(value='price-asc' selected=currentSort==='price-asc') Price: Low to High
+        option(value='price-desc' selected=currentSort==='price-desc') Price: High to Low
+        option(value='brand-asc' selected=currentSort==='brand-asc') Brand (A–Z)
+        option(value='name-asc' selected=currentSort==='name-asc') Name (A–Z)
+        option(value='color-asc' selected=currentSort==='color-asc') Color (A–Z)
     .grid
       each shoe in shoes
         .card
@@ -13,3 +20,7 @@ block content
             p.meta
               span.swatch(style=`background: ${shoe.color}`)
               | #{shoe.color.charAt(0).toUpperCase() + shoe.color.slice(1)} &nbsp;·&nbsp; Size #{shoe.size}
+    script.
+      document.getElementById('sort-select').addEventListener('change', function() {
+        window.location.href = this.value ? '/products?sort=' + this.value : '/products';
+      });

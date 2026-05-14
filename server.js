@@ -1,8 +1,9 @@
 'use strict';
-const express = require('express');
-const path    = require('path');
-const session = require('express-session');
-const db      = require('./db');
+const express  = require('express');
+const path     = require('path');
+const session  = require('express-session');
+const bcrypt   = require('bcryptjs');
+const db       = require('./database');
 
 const app  = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -50,8 +51,16 @@ function requireLogin(req, res, next) {
 app.get('/', (req, res) => res.render('home'));
 
 app.get('/products', (req, res) => {
-  const shoes = db.prepare('SELECT * FROM products').all();
-  res.render('products', { shoes });
+  const sortMap = {
+    'price-asc':  'price ASC',
+    'price-desc': 'price DESC',
+    'brand-asc':  'brand ASC',
+    'name-asc':   'name ASC',
+    'color-asc':  'color ASC',
+  };
+  const sort = sortMap[req.query.sort] || 'id ASC';
+  const shoes = db.prepare(`SELECT * FROM products ORDER BY ${sort}`).all();
+  res.render('products', { shoes, currentSort: req.query.sort || '' });
 });
 
 app.get('/products/:identifier', (req, res) => {
@@ -64,30 +73,39 @@ app.get('/products/:identifier', (req, res) => {
 
 app.get('/register', (req, res) => res.render('register', { error: null }));
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password)
     return res.render('register', { error: 'Username and password are required.' });
 
-  const existing = db.prepare('SELECT id FROM customers WHERE username = ?').get(username);
+  // Normalize username so "Alice" and "alice" are treated as the same account
+  const normalizedUsername = username.trim().toLowerCase();
+
+  const existing = db.prepare('SELECT id FROM customers WHERE username = ?').get(normalizedUsername);
   if (existing)
     return res.render('register', { error: 'Username already taken.' });
 
+  const hash   = await bcrypt.hash(password, 12);
   const result = db.prepare('INSERT INTO customers (username, password) VALUES (?, ?)')
-                   .run(username, password);
+                   .run(normalizedUsername, hash);
 
-  req.session.customer = { id: result.lastInsertRowid, username };
+  req.session.customer = { id: result.lastInsertRowid, username: normalizedUsername };
   res.redirect('/');
 });
 
 app.get('/login', (req, res) => res.render('login', { error: null }));
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  const normalizedUsername = (username ?? '').trim().toLowerCase();
 
-  const customer = db.prepare('SELECT * FROM customers WHERE username = ?').get(username);
-  if (!customer || customer.password !== password)
+  const customer = db.prepare('SELECT * FROM customers WHERE username = ?').get(normalizedUsername);
+
+  // Use bcrypt.compare for hashed passwords. The intentionally vague error
+  // message avoids leaking whether the username exists.
+  const valid = customer && await bcrypt.compare(password, customer.password);
+  if (!valid)
     return res.render('login', { error: 'Invalid username or password.' });
 
   req.session.customer = { id: customer.id, username: customer.username };
@@ -112,8 +130,12 @@ app.get('/cart', requireLogin, (req, res) => {
   res.render('cart', { cart, customer: req.session.customer });
 });
 
+// Accepts optional qty (defaults to 1). If the item is already in the cart,
+// the requested qty is added on top of the existing quantity.
 app.post('/cart/add', requireLogin, (req, res) => {
-  const { name } = req.body;
+  const { name, qty: rawQty } = req.body;
+  const qty = Math.max(1, parseInt(rawQty, 10) || 1);   // ← qty support
+
   const product = findProduct(name);
   if (!product) return res.status(404).json({ error: 'Product not found' });
 
@@ -123,11 +145,35 @@ app.post('/cart/add', requireLogin, (req, res) => {
   ).get(customerId, product.name);
 
   if (existing) {
-    db.prepare('UPDATE cart SET qty = qty + 1 WHERE customer_id = ? AND product_name = ?')
-      .run(customerId, product.name);
+    db.prepare('UPDATE cart SET qty = qty + ? WHERE customer_id = ? AND product_name = ?')
+      .run(qty, customerId, product.name);
   } else {
-    db.prepare('INSERT INTO cart (customer_id, product_name, qty) VALUES (?, ?, 1)')
-      .run(customerId, product.name);
+    db.prepare('INSERT INTO cart (customer_id, product_name, qty) VALUES (?, ?, ?)')
+      .run(customerId, product.name, qty);
+  }
+
+  res.json({ success: true, cart: getCart(customerId) });
+});
+
+// Adjusts qty by delta (+1 or -1). Removes the item if qty drops to 0.
+app.post('/cart/update', requireLogin, (req, res) => {
+  const { name, delta } = req.body;
+  const customerId = req.session.customer.id;
+  const normalized = normalizeName(name);
+
+  const existing = db.prepare(
+    'SELECT * FROM cart WHERE customer_id = ? AND product_name = ?'
+  ).get(customerId, normalized);
+
+  if (!existing) return res.status(404).json({ error: 'Item not in cart' });
+
+  const newQty = existing.qty + (parseInt(delta, 10) || 0);
+  if (newQty <= 0) {
+    db.prepare('DELETE FROM cart WHERE customer_id = ? AND product_name = ?')
+      .run(customerId, normalized);
+  } else {
+    db.prepare('UPDATE cart SET qty = ? WHERE customer_id = ? AND product_name = ?')
+      .run(newQty, customerId, normalized);
   }
 
   res.json({ success: true, cart: getCart(customerId) });

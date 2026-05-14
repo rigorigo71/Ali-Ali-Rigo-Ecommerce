@@ -1,13 +1,10 @@
 extends layout
-
 block content
   .page
     h1 #{customer.username}'s Cart
-
     if !cart || cart.length === 0
       p Your cart is empty.
       a.btn(href='/products') Shop Now
-
     else
       .grid
         each item in cart
@@ -15,22 +12,48 @@ block content
             h2 #{item.name}
             p.brand #{item.brand}
             p.price $#{item.price.toFixed(2)}
-            p.meta Size: #{item.size} &nbsp;|&nbsp; Qty: #{item.qty}
-            p.meta Subtotal: $#{(item.price * item.qty).toFixed(2)}
+            p.meta Size: #{item.size}
+            .qty-selector(style='display:flex; align-items:center; gap:0.75rem; margin:0.5rem 0')
+              button.btn-qty-down(type='button' data-name=item.name style='width:2rem; height:2rem; font-size:1.2rem; cursor:pointer') −
+              span.qty-display(data-name=item.name style='font-size:1rem; font-weight:700; min-width:1.5rem; text-align:center') #{item.qty}
+              button.btn-qty-up(type='button' data-name=item.name style='width:2rem; height:2rem; font-size:1.2rem; cursor:pointer') +
+            p.meta.subtotal(data-name=item.name data-price=item.price) Subtotal: $#{(item.price * item.qty).toFixed(2)}
             button.btn.btn-remove(data-name=item.name) Remove
-
       p(style='margin-top:2rem; font-size:1.2rem; font-weight:800')
         | Total: $#{cart.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(2)}
+      script.
+        function updateQty(name, delta) {
+          fetch('/cart/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, delta })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) location.reload();
+          });
+        }
 
-  script.
-    document.querySelectorAll('.btn-remove').forEach(btn => {
-      btn.addEventListener('click', function() {
-        fetch('/cart/remove', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: this.dataset.name })
-        })
-        .then(res => res.json())
-        .then(() => location.reload());
-      });
-    });
+        document.querySelectorAll('.btn-qty-down').forEach(btn => {
+          btn.addEventListener('click', function() {
+            updateQty(this.dataset.name, -1);
+          });
+        });
+
+        document.querySelectorAll('.btn-qty-up').forEach(btn => {
+          btn.addEventListener('click', function() {
+            updateQty(this.dataset.name, 1);
+          });
+        });
+
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+          btn.addEventListener('click', function() {
+            fetch('/cart/remove', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: this.dataset.name })
+            })
+            .then(res => res.json())
+            .then(() => location.reload());
+          });
+        });
