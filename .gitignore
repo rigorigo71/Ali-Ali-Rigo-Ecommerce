@@ -25,3 +25,4 @@ Thumbs.db
 .idea/
 *.suo
 *.swp
+database.js
